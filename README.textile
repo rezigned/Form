@@ -9,7 +9,7 @@ Tired of licenses
 
 h2. Company
 
-Landau Reece.
+"Landau Reece.":http://www.landaureece.com
 
 h2. Usage
 
