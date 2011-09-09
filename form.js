@@ -367,3 +367,24 @@ Validator.Element.prototype = {
         });
     }
 }
+
+/**
+ * Jquery ways
+ * 
+ * $('#form_id').validator({
+ *    input_name_1: {
+ *       rules: 
+ *    }
+ * })
+ */
+
+(function($){
+    
+    $.fn.validator = function(elements, options) {
+        
+        this.each(function(){
+            Validator.Form(this, elements, options);
+        });
+    }
+    
+})(jQuery)
