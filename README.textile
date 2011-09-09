@@ -4,7 +4,10 @@ This is part of Javascript Form Utilities that I developed to make form validati
 
 @Landau Reece.
 
-h3. Usage
+h2. License
+
+
+h2. Usage
 
 <pre>
 
