@@ -41,6 +41,16 @@ var Validator = {
             },
             msg: 'value must between $0 and $1'
         },
+        min_length: {
+            rule: function(v, options) {
+                
+            }
+        },
+        max_length: {
+            rule: function(v, options) {
+                
+            }
+        },
         /* characters */
         length: {
             rule: function(v, options) {
@@ -63,6 +73,67 @@ var Validator = {
         striptags: function(v) {
             return v && v.replace(/<[^>]+>/g, '');
         }
+    },
+
+    /**
+     * @param string rule   rule name e.g. 'email', 'match', 'required'
+     * @param mixed  v      value
+     * @param object el     dom element
+     * @param mixed  args   callback or rule configs
+     */
+    validate: function(rule, v, el, args) {
+
+        var errors = [],
+            fail   = false,
+            msg    = null,
+            RULES  = this.RULES;
+
+        // user use custom validation per element
+        if (args && args.constructor == Function) {
+            msg = fail = args.call(el, v);
+        }
+
+        // use normal validation 
+        else if (rule in RULES) {
+            var r = RULES[rule],
+                c = r.rule.constructor;
+
+            switch(c) {
+
+                // regex rule
+                case RegExp:
+
+                    fail = !r.rule.test(v);
+                    msg  = r.msg;
+                    break;
+
+                // callback rule
+                case Function:
+
+                    var params = [v];
+                    params.push(args);
+
+                    var fail = r.rule.apply(null, params);
+
+                    msg = !r.msg ? fail : r.msg;
+                    
+                    break;
+            }
+        }
+        
+        if (args && msg) {
+            
+            msg = msg.replace('$0', args);
+            // index 1 becuase of 0 is the value
+            //for(var i=0, l=args.length; i<l; i++)
+            //   msg = msg.replace('$' + i, args[i])    
+        }
+        
+        // failed test
+        if (fail)
+            errors.push(msg);
+
+        return errors;  
     },
     bind: function(fn, ctx) {
         
@@ -131,7 +202,7 @@ Validator.Form.options = {
 
         var p = $(this.inline_style == 'relative' ? parent : document.body),
             opts   = this,
-            el_id  = this.inline_css + '-' + el.name.replace(/[^\w-_]+/, ''),
+            el_id  = this.inline_css + '-' + el.attr('name').replace(/[^\w-_]+/, ''),
             notice = $('#' + el_id);
 
         // check existance
@@ -154,11 +225,15 @@ Validator.Form.options = {
             this.render_inline_msg(msg)
         );
 
+        p.removeClass(opts.inline_css_passed)
+         .removeClass(opts.inline_css_failed)
+         .addClass(
+            status == 'pass' ? opts.inline_css_passed
+                             : opts.inline_css_failed
+        );
+            
         notice.attr('class', opts.inline_css)
-              .addClass(
-                  status == 'pass' ? opts.inline_css_passed
-                                   : opts.inline_css_failed
-              ).show();
+              .show();
     },
     render_inline_msg: function(msg) {
         return msg && msg.join(', ');
@@ -194,7 +269,7 @@ Validator.Form.prototype = {
         
         this.el = form = $(form);
         this[0] = this.el[0];
-        this.id = 'form-' + new Date().valueOf() % 9999;
+        this.id = 'form-' + new Date().valueOf() % 99999;
         
         this.el.data('validator', this);
         
@@ -204,8 +279,6 @@ Validator.Form.prototype = {
         
         this.options = options && $.extend(_self.Form.options, options) 
                                || _self.Form.options;
-                           
-        this.options.id = this.id;
         
         form.addClass(this.options.namespace);
         
@@ -259,23 +332,28 @@ Validator.Form.prototype = {
  */
 Validator.Element.prototype = {
     parent: null, // element's container - to add inline status
-    validator: null,
     rules: {},
     filters: {},
+    validator: null,
     _item: null,
     options: {
         rules: {},
         filters: {}
     },
+    
+    /**
+     * @param native el      native dom element
+     * @param object options element's options
+     */
     construct: function(el, options, validator) {
 
+        this[0] = el;
         this.el = $(el);
-        this[0] = this.el;
 
         this.validator = options.validator || Validator;
         this.renderer  = $(this.item().form).data('validator').options;
 
-        this.parent = this._parent(this.item(), options.parent);
+        this.parent = this._parent(this.el, options.parent);
         this.rules  = this._rules(options.rules);
 
         // add on blur event
@@ -285,28 +363,39 @@ Validator.Element.prototype = {
      * Always return single element
      */
     item: function() {
-        
-        if (!this._item)
-            this._item = this[0].length && this[0].type != 'select-one' ? this[0][this[0].length - 1] : this[0];
-        
+
+        if (!this._item) {
+            var e = this[0];
+
+            this._item = e.length // && !!(e.nodeName && e.nodeName.toLowerCase() != 'select')
+                         ? e[e.length - 1] 
+                         : e;
+        }
+
         return this._item;
     },
     value: function() {
         
-        var e = this[0];
-
-        // selects, radios, checkboxes
-        if (e.length && e.type != 'select-one') {
+        var e    = this[0],
+            vals = [],
+            els;
             
-            var vals = [];
-            $(e).filter(':checked').each(function(){
-                vals.push(this.value);
-            });
-
-            return vals;
+        if (e.type != 'select-one') {
+            
+            // options
+            if (e.type == 'select-multiple')
+                els = $(e).find(':selected');
+            
+            // radios, checkboxes
+            else if (e.length || e.type == 'checkbox')
+                els = $(e).filter(':checked');
         }
 
-        return e.value;
+        if (els)
+            for(var i=0, l=els.length; i<l; i++)
+                els[i].value && vals.push(els[i].value);
+
+        return els ? vals : e.value;
         
     },
 
@@ -316,27 +405,28 @@ Validator.Element.prototype = {
     validate: function() {
 
         var v  = this.value(),
+            vd = this.validator,
             el = this[0],
-            results = [],
-            rules   = this.rules;
+            results  = [],
+            rules    = this.rules;
 
         // test all rules
         for(var rule in rules) {
 
             var e;
-            if (e = this._validate(rule, el, v, rules[rule]))
+            if (e = vd.validate(rule, v, el, rules[rule]))
                 e.length && results.push(e);
         }
-        
+
         // display error/success message
         if (results.length) {
-            this.renderer.render_inline_error(this.item(), 'fail', results, this.parent);
-
+            // console.log(this.renderer.render_inline_error(this.item(), 'fail', results, this.parent) & 1, results, 'err')
+            this.renderer.render_inline_error(this.el, 'fail', results, this.parent);
             return false;
         }
         else {
-            this.renderer.render_inline_error(this.item(), 'pass', '', this.parent);
-
+            // console.log(this.renderer.render_inline_error(this.item(), 'pass', '', this.parent) | 1);
+            this.renderer.render_inline_error(this.el, 'pass', '', this.parent);
             return true;
         }
     },
@@ -346,26 +436,28 @@ Validator.Element.prototype = {
      */
     _parent: function(el, parent) {
         
-        var li;
+        var p,
+            e = el[0]; // native element
 
         if (parent) {
 
             switch(parent.constructor) {
                 case Function:
-                    li = parent.call(el);
+                    p = parent.call(e);
                     break;
 
                 case String:
 
-                    li = $(el).closest(parent);
+                    p = $(e).closest(parent);
                     break;
             }
         }
         
         else
-            li = el.parentNode;
-        
-        return li;
+            // in case of multiple elements e.g. radios we use 2nd parent
+            p = el.length > 1 ? e.parentNode.parentNode : e.parentNode;
+
+        return p;
     },
     
     /**
@@ -390,69 +482,6 @@ Validator.Element.prototype = {
         }
 
         return r;
-    },
-
-    /**
-     * @param string rule name e.g. 'email', 'match'
-     * @param mixed  value
-     * @param mixed  arguments to callback function or the callback it self
-     */
-    _validate: function(r, el, v, args) {
-
-        var errors = [],
-            fail   = false,
-            msg    = null,
-            RULES  = this.validator.RULES;
-
-        // user use custom validation per element
-        if (args && args.constructor == Function) {
-            msg = fail = args.call(el, v);
-        }
-
-        // use normal validation 
-        else if (r in RULES) {
-            var rule = RULES[r],
-                c    = rule.rule.constructor;
-
-            switch(c) {
-
-                // regex rule
-                case RegExp:
-
-                    fail = !rule.rule.test(v);
-                    msg  = rule.msg;
-                    break;
-
-                // callback rule
-                case Function:
-
-                    var params = [v];
-                    params.push(args);
-
-                    var fail = rule.rule.apply(null, params);
-
-                    msg = !rule.msg ? fail : rule.msg;
-                    
-                    break;
-            }
-        }
-        
-        if (args && msg) {
-            
-            msg = msg.replace('$0', args);
-            // index 1 becuase of 0 is the value
-            //for(var i=0, l=args.length; i<l; i++)
-            //   msg = msg.replace('$' + i, args[i])    
-        }
-        
-        // failed test
-        if (fail)
-            errors.push(msg);
-
-        return errors;  
-    },
-    filter: function() {
-
     },
     blur: function() {
 

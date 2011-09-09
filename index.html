@@ -35,14 +35,28 @@
                 <input type="password" name="password" />
             </div>
             <div>
-                <label>Radios</label><br />
+                <label>Select box</label>
+                <select name="select-box">
+                    <option value="">Please select</option>
+                    <option value="1">Test</option>
+                </select>
+            </div>
+            <div>
+                <label>Select box (multiple)</label>
+                <select name="select-box-multiple" multiple="true">
+                    <option value="">Please select</option>
+                    <option value="1">Test</option>
+                </select>
+            </div>
+            <div>
+                <label>Radios</label>
                 <ul>
                     <li><input type="radio" name="ex_1" value="1" /> Example 1</li>
                     <li><input type="radio" name="ex_1" value="1" /> Example 1</li>
                 </ul>
             </div>
             <div>
-                <label>Checkboxes</label><br />
+                <label>Checkboxes</label>
                 <ul>
                     <li><input type="checkbox" name="ex_2" value="1" /> Example 1</li>
                     <li><input type="checkbox" name="ex_2" value="1" /> Example 1</li>
@@ -55,6 +69,7 @@
             <input type="submit" value="Submit" />
         </form>
         
+
         <script type="text/javascript">
             
             $('#my-form').validator({
@@ -70,11 +85,17 @@
                 ex_2: {
                     rules: ['required']
                 },
+                'select-box': {
+                    rules: ['required']
+                },
+                'select-box-multiple': {
+                    rules: ['required']
+                },
                 term: {
                     rules: ['required']
                 }
             });
-            
+
         </script>
     </body>
 </html>
