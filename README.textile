@@ -4,9 +4,11 @@ This is part of Javascript Form Utilities that I developed to make form validati
 
 
 h2. License
+
 Tired of licenses
 
 h2. Company
+
 Landau Reece.
 
 h2. Usage
