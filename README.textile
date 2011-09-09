@@ -10,12 +10,28 @@ h3. Usage
 
 Validator.Form('#form_id', {
 
-    // simple style
+    // simple style 'input name' + 'array'
     firstname: ['required'],
     email: ['email'],
 
-    // more custom style
-    firstname: 
+    // more custom style 'input name' + 'object'
+    email_confirm: {
+        email: true,
+        match: '#email' // make sure it match with 'email'
+    },
+    password: {
+        required: function() {
+            
+            // custom validation
+        }
+    },
+
+    // working with radios, checkboxes and multiple selects
+    choices: {
+        required: true // normally you don't have to add 'required' rule since all elements defined here has a required by default
+    },
+
+
 });
 
 </pre>
