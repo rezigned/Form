@@ -64,131 +64,185 @@ var Validator = {
             return v && v.replace(/<[^>]+>/g, '');
         }
     },
-    Form: function(form, elements, options) {
-
-        var loaded = [],
-            _self  = this;
-
-        form = $(form);
-
-        form.addClass('js-form');
+    bind: function(fn, ctx) {
         
-        // no element found ignore
-        if (!form.length)
-            return;
-        
-        // handle onblur (inline validation)
-        for(var i in elements) {
-            loaded.push(
-                form[0].elements[i] && new this.Element(form[0].elements[i], elements[i])
-            );
+        return function(){
+            return fn.call(ctx);
         }
-
-        // handle form submission
-        form.submit(function(){
-            
-            var e;
-            
-            for(var i=0, l=loaded.length; i<l; i++) {
-                var el = loaded[i];
-                
-                // invalid
-                if (!el.validate())
-                    !e && (e = el.el);
-            }
-                
-
-            // errors found
-            if (e) {
-
-                _self.focus(e);
-                return false;
-            } 
-            else
-                return true;
-        });
-
-    },
-    display_status: function() {
-        
-    },
-    display_inline_status: function(el, status, msg, parent) {
-
-        var li = $(parent);
-
-        var css_status = 'validated',
-            css_error  = 'failed',
-            css_pass   = 'passed',
-            tpl = '<div class="inline-error"></div>',
-            gap = 10,
-            offset = $(el).offset(),
-            li_offset = li.offset();
-            
-        // li.css('position') == 'static' ? {top: 0, left: 0} : 
-        var notice = li.addClass(css_status)
-                       .find('.inline-error');
-
-        if (!notice.length)
-            notice = $(tpl).appendTo(li);
-
-        // show error message
-        notice.text(msg);
-
-        notice.removeClass(css_error)
-          .css({
-              left: (offset.left + $(el).outerWidth()) - li_offset.left + gap,
-              top: offset.top - li_offset.top + (($(el).outerHeight() - notice.height())/2)
-          })
-          .removeClass(css_pass)
-          .addClass(
-              status == 'pass' ? css_pass 
-                               : css_error
-          ).show();
     },
     focus: function(e) {
         $('html').animate({
             scrollTop: $(e).offset().top
         });
     },
-    
+    Form: function(form, elements, options) {
+        
+        // could use .apply here but i think it's not necessary
+        this.construct(form, elements, options);
+    },
     Element: function(el, options) {
+        
         this.construct(el, options);
     }
 };
 
+Validator.Form.options = {
+    
+    'namespace': 'js-form',
+    
+    /**
+     * Inline error's position
+     * 
+     * possible values
+     *   'absolute': 
+     *   'relative': 
+     */
+    'inline_style': 'relative',
+
+    /**
+     * This only work when 'inline_style' set to 'absolute'
+     * 
+     * s - South, w - West, n - North, e - East, 
+     * sw - South West, se - South East, nw - North West, ne - North East
+     */
+    'inline_position': 'e',
+
+    /**
+     * css class name for inline element
+     */
+    'inline_css_validated': 'validated',
+    'inline_css_failed': 'failed',
+    'inline_css_passed': 'passed',
+    'inline_css': 'inline-error',
+    
+    'inline_html': '<span class="$0"></span>',
+
+    /**
+     * Display inline error message
+     */ 
+    'display_inline': true,
+    'gap': 20,
+    
+    render_error: function() {
+        
+    },
+    
+    render_inline_error: function(el, status, msg, parent) {
+
+        var p = $(this.inline_style == 'relative' ? parent : document.body),
+            opts   = this,
+            el_id  = this.inline_css + '-' + el.name.replace(/[^\w-_]+/, ''),
+            notice = $('#' + el_id);
+
+        // check existance
+        if (!notice.length)
+            notice = $(this.inline_html.replace('$0', this.inline_css));
+        
+        notice.attr('id', el_id);
+            
+        if (opts.inline_style == 'relative') {
+            opts.render_inline_relative(notice, el, p);
+        }
+        
+        // absolute
+        else {
+            opts.render_inline_absolute(notice, el, p);
+        }
+        
+        // show error message
+        notice.text(
+            this.render_inline_msg(msg)
+        );
+
+        notice.attr('class', opts.inline_css)
+              .addClass(
+                  status == 'pass' ? opts.inline_css_passed
+                                   : opts.inline_css_failed
+              ).show();
+    },
+    render_inline_msg: function(msg) {
+        return msg && msg.join(', ');
+    },
+    render_inline_relative: function(notice, el, parent) {
+
+        parent.append(notice);
+    },
+    render_inline_absolute: function(notice, el, parent) {
+
+        var offset = $(el).offset();
+
+        notice.css({
+                  'position': 'absolute',
+                  left: $(el).outerWidth() + offset.left + this.gap,
+                  top: offset.top // ($(el).outerHeight() - notice.height())/2
+              });
+              
+        $('body').append(notice);
+    }
+}
+
 Validator.Form.prototype = {
-    options: {
+    id: null,
+    el: null,
+    options: {},
+    loaded: [], // loaded elements
+    validator: null,
+    construct: function(form, elements, options) {
+
+        var loaded = [],
+            _self  = Validator;
         
-        /**
-         * Inline error's position
-         * 
-         * possible values
-         *   'absolute': 
-         *   'relative': 
-         */
-        'inline_style': 'absolute',
+        this.el = form = $(form);
+        this[0] = this.el[0];
+        this.id = 'form-' + new Date().valueOf() % 9999;
         
-        /**
-         * This only work with 'inline_style': 'absolute'
-         * 
-         * s - South, w - West, n - North, e - East, 
-         * sw - South West, se - South East, nw - North West, ne - North East
-         */
-        'inline_position': 'e',
+        this.el.data('validator', this);
         
-        /**
-         * css class name for inline element
-         */
-        'inline_css_validated': 'validated',
-        'inline_css_failed': 'failed',
-        'inline_css_passed': 'passed',
+        // no element found ignore
+        if (!form.length)
+            return;
         
-        'inline_html': '',
+        this.options = options && $.extend(_self.Form.options, options) 
+                               || _self.Form.options;
+                           
+        this.options.id = this.id;
         
-        /**
-         * Display inline error message
-         */ 
-        'display_inline': true
+        form.addClass(this.options.namespace);
+        
+        // handle inline validation
+        for(var i in elements) {
+            loaded.push(
+                form[0].elements[i] && new _self.Element(form[0].elements[i], elements[i])
+            );
+        }
+
+        this.loaded    = loaded;
+        this.validator = _self;
+        
+        // handle form submission
+        form.submit(_self.bind(this.validate, this));
+    },
+    validate: function() {
+
+        var e,
+            ls = this.loaded;
+
+        for(var i=0, l=ls.length; i<l; i++) {
+            var el = ls[i];
+
+            // invalid
+            !el.validate() && !e 
+                           && (e = el.el);
+        }
+
+        // errors found
+        if (e) {
+            this.validator.focus(e)
+            return false;
+        }
+            
+        else
+            return true;
     }
 };
 
@@ -208,6 +262,7 @@ Validator.Element.prototype = {
     validator: null,
     rules: {},
     filters: {},
+    _item: null,
     options: {
         rules: {},
         filters: {}
@@ -215,8 +270,11 @@ Validator.Element.prototype = {
     construct: function(el, options, validator) {
 
         this.el = $(el);
-        this[0] = this.el[0];
+        this[0] = this.el;
+
         this.validator = options.validator || Validator;
+        this.renderer  = $(this.item().form).data('validator').options;
+
         this.parent = this._parent(this.item(), options.parent);
         this.rules  = this._rules(options.rules);
 
@@ -227,12 +285,16 @@ Validator.Element.prototype = {
      * Always return single element
      */
     item: function() {
-        return this[0].length && this[0].type != 'select-one' ? this[0][this[0].length - 1] : this[0];
+        
+        if (!this._item)
+            this._item = this[0].length && this[0].type != 'select-one' ? this[0][this[0].length - 1] : this[0];
+        
+        return this._item;
     },
     value: function() {
         
         var e = this[0];
-        
+
         // selects, radios, checkboxes
         if (e.length && e.type != 'select-one') {
             
@@ -268,12 +330,12 @@ Validator.Element.prototype = {
         
         // display error/success message
         if (results.length) {
-            this.validator.display_inline_status(this.item(), 'fail', results.join(', '), this.parent);
+            this.renderer.render_inline_error(this.item(), 'fail', results, this.parent);
 
             return false;
         }
         else {
-            this.validator.display_inline_status(this.item(), 'pass', '', this.parent);
+            this.renderer.render_inline_error(this.item(), 'pass', '', this.parent);
 
             return true;
         }
@@ -417,7 +479,7 @@ Validator.Element.prototype = {
     $.fn.validator = function(elements, options) {
         
         this.each(function(){
-            Validator.Form(this, elements, options);
+            new Validator.Form(this, elements, options);
         });
     }
     

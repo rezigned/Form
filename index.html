@@ -20,7 +20,7 @@
             }
             
         </style>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.3/jquery.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.3/jquery.js"></script>
         <script type="text/javascript" src="form.js"></script>
     </head>
     <body>
@@ -34,6 +34,23 @@
                 <label>Password</label>
                 <input type="password" name="password" />
             </div>
+            <div>
+                <label>Radios</label><br />
+                <ul>
+                    <li><input type="radio" name="ex_1" value="1" /> Example 1</li>
+                    <li><input type="radio" name="ex_1" value="1" /> Example 1</li>
+                </ul>
+            </div>
+            <div>
+                <label>Checkboxes</label><br />
+                <ul>
+                    <li><input type="checkbox" name="ex_2" value="1" /> Example 1</li>
+                    <li><input type="checkbox" name="ex_2" value="1" /> Example 1</li>
+                </ul>
+            </div>
+            <div>
+                <input type="checkbox" name="term" value="1" /> Term &amp; Conditions
+            </div>
             
             <input type="submit" value="Submit" />
         </form>
@@ -45,6 +62,15 @@
                     rules: ['required']
                 },
                 password: {
+                    rules: ['required']
+                },
+                ex_1: {
+                    rules: ['required']
+                },
+                ex_2: {
+                    rules: ['required']
+                },
+                term: {
                     rules: ['required']
                 }
             });

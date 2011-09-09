@@ -51,4 +51,8 @@ Validator.Form('#form_id', {
 
 });
 
+h2. New features to implement
+
+# handle dynamic dom
+
 </pre>
