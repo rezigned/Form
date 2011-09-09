@@ -1,1 +1,21 @@
-h1. Example README 
+h1. JS Form
+
+This is part of Javascript Form Utilities that I developed to make form validation with js become easier.
+
+@Landau Reece.
+
+h3. Usage
+
+<pre>
+
+Validator.Form('#form_id', {
+
+    // simple style
+    firstname: ['required'],
+    email: ['email'],
+
+    // more custom style
+    firstname: 
+});
+
+</pre>
