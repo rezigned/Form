@@ -67,10 +67,12 @@ var Validator = {
     Form: function(form, elements, options) {
 
         var loaded = [],
-            _self = this;
+            _self  = this;
 
         form = $(form);
 
+        form.addClass('js-form');
+        
         // no element found ignore
         if (!form.length)
             return;
@@ -115,8 +117,8 @@ var Validator = {
         var li = $(parent);
 
         var css_status = 'validated',
-            css_error  = 'fail',
-            css_pass   = 'pass',
+            css_error  = 'failed',
+            css_pass   = 'passed',
             tpl = '<div class="inline-error"></div>',
             gap = 10,
             offset = $(el).offset(),
@@ -153,11 +155,42 @@ var Validator = {
         this.construct(el, options);
     }
 };
-Validator.i18n = {
-    en: {
-        email: ''
+
+Validator.Form.prototype = {
+    options: {
+        
+        /**
+         * Inline error's position
+         * 
+         * possible values
+         *   'absolute': 
+         *   'relative': 
+         */
+        'inline_style': 'absolute',
+        
+        /**
+         * This only work with 'inline_style': 'absolute'
+         * 
+         * s - South, w - West, n - North, e - East, 
+         * sw - South West, se - South East, nw - North West, ne - North East
+         */
+        'inline_position': 'e',
+        
+        /**
+         * css class name for inline element
+         */
+        'inline_css_validated': 'validated',
+        'inline_css_failed': 'failed',
+        'inline_css_passed': 'passed',
+        
+        'inline_html': '',
+        
+        /**
+         * Display inline error message
+         */ 
+        'display_inline': true
     }
-}
+};
 
 /**
  *
@@ -181,8 +214,8 @@ Validator.Element.prototype = {
     },
     construct: function(el, options, validator) {
 
-        this[0] = el;
         this.el = $(el);
+        this[0] = this.el[0];
         this.validator = options.validator || Validator;
         this.parent = this._parent(this.item(), options.parent);
         this.rules  = this._rules(options.rules);
@@ -214,6 +247,7 @@ Validator.Element.prototype = {
         return e.value;
         
     },
+
     /**
      * @param array|object rules set
      */
@@ -366,7 +400,7 @@ Validator.Element.prototype = {
             _self.validate();
         });
     }
-}
+};
 
 /**
  * Jquery ways

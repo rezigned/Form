@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Simple Javascript Validation</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        
+        <style type="text/css">
+            .js-form {
+                
+            }
+            .js-form .validated {
+                
+            }
+            .js-form .failed {
+                background: #FFEEEE;
+                color: #BB2222;
+            }
+            .js-form .passed {
+                background: #EEFFEE;
+            }
+            
+        </style>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.3/jquery.min.js"></script>
+        <script type="text/javascript" src="form.js"></script>
+    </head>
+    <body>
+        
+        <form id="my-form" method="post">
+            <div>
+                <label>Username</label>
+                <input type="text" name="username" /> 
+            </div>
+            <div>
+                <label>Password</label>
+                <input type="password" name="password" />
+            </div>
+            
+            <input type="submit" value="Submit" />
+        </form>
+        
+        <script type="text/javascript">
+            
+            $('#my-form').validator({
+                username: {
+                    rules: ['required']
+                },
+                password: {
+                    rules: ['required']
+                }
+            });
+            
+        </script>
+    </body>
+</html>
