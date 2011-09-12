@@ -21,6 +21,7 @@
             
         </style>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.3/jquery.js"></script>
+        <script type="text/javascript" src="require.js"></script>
         <script type="text/javascript" src="form.js"></script>
     </head>
     <body>
@@ -71,7 +72,13 @@
         
 
         <script type="text/javascript">
+
+            require('form');
             
+            // or module style
+            var f = require('form').Form;
+            
+            // new f('#my-form', {
             $('#my-form').validator({
                 username: {
                     rules: ['required']
