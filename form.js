@@ -207,9 +207,31 @@ require(function($){
 
         render_error: function() {
 
+<<<<<<< HEAD
         },
 
         render_inline_error: function(el, status, msg, parent) {
+=======
+    /**
+     * Display inline error message
+     */ 
+    'display_inline': true,
+    'gap': 20,
+    
+    render_error: function() {
+        
+    },
+    
+    render_inline_error: function(el, status, msg, parent) {
+        
+        if (!this.display_inline)
+            return;
+        
+        var p = $(this.inline_style == 'relative' ? parent : document.body),
+            opts   = this,
+            el_id  = this.inline_css + '-' + el.attr('name').replace(/[^\w-_]+/, ''),
+            notice = $('#' + el_id);
+>>>>>>> Test input array
 
             var p = $(this.inline_style == 'relative' ? parent : document.body),
                 opts   = this,
@@ -266,6 +288,7 @@ require(function($){
             $('body').append(notice);
         }
     }
+<<<<<<< HEAD
 
     Form.prototype = {
         id: null,
@@ -274,6 +297,42 @@ require(function($){
         loaded: [], // loaded elements
         validator: null,
         construct: function(form, elements, options) {
+=======
+};
+
+/**
+ *
+ * @example 
+ * new Element(input, {
+ *     rules: {
+ *         required: true,
+ *         match: '#other'
+ *     },
+ *     
+ * });
+ */
+Validator.Element.prototype = {
+    parent: null, // element's container - to add inline status
+    rules: {},
+    filters: {},
+    validator: null,
+    _item: null,
+    options: {
+        rules: {},
+        filters: {}
+    },
+    
+    /**
+     * @param native el      native dom element
+     * @param object options element's options
+     */
+    construct: function(el, options, validator) {
+        
+        !arguments.callee.i && (arguments.callee.i = 0);
+    
+        this[0] = el;
+        this.el = $(el);
+>>>>>>> Test input array
 
             var loaded = [],
                 _self  = Validator;
@@ -291,7 +350,26 @@ require(function($){
 
             this.el.data('validator', this);
             
+<<<<<<< HEAD
             form.addClass(this.options.namespace);
+=======
+        if (e.type != 'select-one') {
+            
+            // options
+            if (e.type == 'select-multiple')
+                els = $(e).find(':selected');
+            
+            // handle name[] inputs
+            else if (e[0] && e[0].type == 'text') {
+                els = e;
+            }
+            
+            // radios, checkboxes, checkbox
+            else if (e.length || e.type == 'checkbox') {
+                els = $(e).filter(':checked');
+            }
+        }
+>>>>>>> Test input array
 
             // handle inline validation
             for(var i in elements) {
@@ -387,6 +465,14 @@ require(function($){
                              ? e[e.length - 1] 
                              : e;
             }
+<<<<<<< HEAD
+=======
+        }
+        
+        else
+            // in case of multiple elements e.g. radios we use 2nd parent
+            p = el.length > 1 && e.type != 'text' ? e.parentNode.parentNode : e.parentNode;
+>>>>>>> Test input array
 
             return this._item;
         },
